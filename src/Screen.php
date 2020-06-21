@@ -8,7 +8,7 @@ namespace SergeLiatko\WPBulkAction;
  *
  * @package SergeLiatko\WPBulkAction
  */
-class Screen {
+class Screen implements getIdInterface {
 
 	/**
 	 * @var string $id
