@@ -13,13 +13,13 @@ class Factory {
 	/**
 	 * @param array $items
 	 *
-	 * @return array|\SergeLiatko\WPBulkAction\getIdInterface[]
+	 * @return array|\SergeLiatko\WPBulkAction\GetIdInterface[]
 	 */
 	public static function mapIdToKey( array $items ): array {
 		$new_items = array();
-		/** @var mixed|\SergeLiatko\WPBulkAction\getIdInterface $item */
+		/** @var mixed|\SergeLiatko\WPBulkAction\GetIdInterface $item */
 		foreach ( $items as $item ) {
-			if ( in_array( 'SergeLiatko\WPBulkAction\getIdInterface', class_implements( get_class( $item ) ) ) ) {
+			if ( in_array( 'SergeLiatko\WPBulkAction\GetIdInterface', class_implements( get_class( $item ) ) ) ) {
 				$new_items[ $item->getId() ] = $item;
 			}
 		}

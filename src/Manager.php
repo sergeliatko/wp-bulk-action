@@ -47,14 +47,14 @@ class Manager {
 	}
 
 	/**
-	 * @return array|\SergeLiatko\WPBulkAction\Screen[]
+	 * @return array|\SergeLiatko\WPBulkAction\GetActionsInterface[]
 	 */
 	public function getScreens(): array {
 		return $this->screens;
 	}
 
 	/**
-	 * @param array|\SergeLiatko\WPBulkAction\Screen[] $screens
+	 * @param array|\SergeLiatko\WPBulkAction\GetActionsInterface[] $screens
 	 *
 	 * @return Manager
 	 */

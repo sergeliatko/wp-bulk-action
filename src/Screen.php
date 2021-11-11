@@ -8,7 +8,7 @@ namespace SergeLiatko\WPBulkAction;
  *
  * @package SergeLiatko\WPBulkAction
  */
-class Screen implements getIdInterface {
+class Screen implements GetActionsInterface {
 
 	/**
 	 * @var string $id
@@ -33,16 +33,6 @@ class Screen implements getIdInterface {
 		extract( wp_parse_args( $args, $this->defaults() ), EXTR_OVERWRITE );
 		$this->setId( $id );
 		$this->setActions( $actions );
-	}
-
-	/**
-	 * @return array[]
-	 */
-	protected function defaults(): array {
-		return array(
-			'id'      => 'edit-post',
-			'actions' => array(),
-		);
 	}
 
 	/**
@@ -77,7 +67,7 @@ class Screen implements getIdInterface {
 	 * @return Screen
 	 */
 	public function setActions( array $actions ): Screen {
-		$defaults = array( 'screen' => $this->getId() );
+		$defaults = array( 'screen' => $this );
 		array_walk( $actions, function ( &$item ) use ( $defaults ) {
 			$item = Factory::createAction( wp_parse_args( $item, $defaults ) );
 		} );
@@ -85,4 +75,30 @@ class Screen implements getIdInterface {
 
 		return $this;
 	}
+
+	/**
+	 * @param string $url
+	 *
+	 * @return string
+	 */
+	public function remove_actions_query_params( string $url ): string {
+		$params = array();
+		foreach ( $this->getActions() as $action ) {
+			$params[ $param = $action->getQueryParam() ]                    = $param;
+			$params[ $param_requested = $action->getQueryParamRequested() ] = $param_requested;
+		}
+
+		return remove_query_arg( $params, $url );
+	}
+
+	/**
+	 * @return array[]
+	 */
+	protected function defaults(): array {
+		return array(
+			'id'      => 'edit-post',
+			'actions' => array(),
+		);
+	}
+
 }

@@ -8,15 +8,15 @@ namespace SergeLiatko\WPBulkAction;
  *
  * @package SergeLiatko\WPBulkAction
  */
-class Action implements getIdInterface {
+class Action implements GetIdInterface {
 
 	public const REGISTRATION_FILTER_PREFIX = 'bulk_actions-';
 	public const HANDLER_FILTER_PREFIX      = 'handle_bulk_actions-';
-	public const DEFAULT_SCREEN             = 'edit-post';
 	public const QUERY_PREFIX               = 'bulk-';
+	public const QUERY_PREFIX_REQUESTED     = 'bulk-requested-';
 
 	/**
-	 * @var string $screen
+	 * @var GetActionsInterface $screen
 	 */
 	protected $screen;
 
@@ -29,6 +29,11 @@ class Action implements getIdInterface {
 	 * @var string
 	 */
 	protected $query_param;
+
+	/**
+	 * @var string $query_param_requested
+	 */
+	protected $query_param_requested;
 
 	/**
 	 * @var callable $callback
@@ -56,19 +61,29 @@ class Action implements getIdInterface {
 	protected $single_numbers;
 
 	/**
+	 * @var bool $did_action
+	 */
+	private $did_action;
+
+	/**
+	 * @var int $processed_count
+	 */
+	private $processed_count;
+
+	/**
 	 * BulkAction constructor.
 	 *
 	 * @param array $args
 	 */
 	public function __construct( array $args ) {
 		/**
-		 * @var string        $screen
-		 * @var string        $action
-		 * @var callable|null $callback
-		 * @var string        $label
-		 * @var string        $msg_single
-		 * @var string        $msg_plural
-		 * @var int[]         $single_numbers
+		 * @var GetActionsInterface $screen
+		 * @var string              $action
+		 * @var callable|null       $callback
+		 * @var string              $label
+		 * @var string              $msg_single
+		 * @var string              $msg_plural
+		 * @var int[]               $single_numbers
 		 */
 		extract( wp_parse_args( $args, $this->defaults() ), EXTR_OVERWRITE );
 		$this->setScreen( $screen );
@@ -78,13 +93,16 @@ class Action implements getIdInterface {
 		$this->setMsgSingle( $msg_single );
 		$this->setMsgPlural( $msg_plural );
 		$this->setSingleNumbers( $single_numbers );
+		$this->setDidAction( false );
+		$this->setProcessedCount( 0 );
 		if (
 			!$this->isEmpty( $screen = $this->getScreen() )
 			&& !$this->isEmpty( $this->getAction() )
 			&& is_callable( $this->getCallback() )
 		) {
-			add_filter( self::REGISTRATION_FILTER_PREFIX . $screen, array( $this, 'register' ), 10, 1 );
-			add_filter( self::HANDLER_FILTER_PREFIX . $screen, array( $this, 'handle' ), 10, 3 );
+			add_filter( self::REGISTRATION_FILTER_PREFIX . $screen->getId(), array( $this, 'register' ), 10, 1 );
+			add_filter( self::HANDLER_FILTER_PREFIX . $screen->getId(), array( $this, 'handle' ), 10, 3 );
+			add_filter( 'removable_query_args', array( $this, 'removable_query_args' ), 10, 1 );
 			add_action( 'admin_notices', array( $this, 'notice' ), 10, 0 );
 		}
 	}
@@ -92,9 +110,9 @@ class Action implements getIdInterface {
 	/**
 	 * @return array
 	 */
-	protected function defaults() {
+	protected function defaults(): array {
 		return array(
-			'screen'         => self::DEFAULT_SCREEN,
+			'screen'         => null,
 			'action'         => '',
 			'callback'       => null,
 			'label'          => '',
@@ -114,19 +132,19 @@ class Action implements getIdInterface {
 	}
 
 	/**
-	 * @return string
+	 * @return \SergeLiatko\WPBulkAction\GetActionsInterface
 	 */
-	public function getScreen(): string {
+	public function getScreen(): GetActionsInterface {
 		return $this->screen;
 	}
 
 	/**
-	 * @param string $screen
+	 * @param \SergeLiatko\WPBulkAction\GetActionsInterface $screen
 	 *
 	 * @return Action
 	 */
-	public function setScreen( string $screen ): Action {
-		$this->screen = sanitize_key( $screen );
+	public function setScreen( GetActionsInterface $screen ): Action {
+		$this->screen = $screen;
 
 		return $this;
 	}
@@ -214,11 +232,26 @@ class Action implements getIdInterface {
 		if ( $this->getAction() !== $action ) {
 			return $redirect;
 		}
-		foreach ( $item_ids as $id ) {
-			call_user_func( $this->getCallback(), $id );
+		//do not process items if already processed
+		if ( false === $this->getDidAction() ) {
+			$processed_count = 0;
+			foreach ( $item_ids as $id ) {
+				//if result is not empty, then it is processed successfully
+				if ( !self::isEmpty( call_user_func( $this->getCallback(), $id ) ) ) {
+					$processed_count ++;
+				}
+			}
+			$this->setProcessedCount( $processed_count );
+			$this->setDidAction( true );
 		}
 
-		return add_query_arg( $this->getQueryParam(), count( $item_ids ), $redirect );
+		return add_query_arg(
+			array(
+				$this->getQueryParam()          => $this->getProcessedCount(),
+				$this->getQueryParamRequested() => count( $item_ids ),
+			),
+			$this->getScreen()->remove_actions_query_params( $redirect )
+		);
 	}
 
 	/**
@@ -238,9 +271,42 @@ class Action implements getIdInterface {
 	 * @return Action
 	 */
 	public function setQueryParam( string $query_param ): Action {
-		$this->query_param = self::QUERY_PREFIX . $query_param;
+		$this->query_param = self::QUERY_PREFIX . sanitize_key( $query_param );
 
 		return $this;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getQueryParamRequested(): string {
+		if ( empty( $this->query_param_requested ) ) {
+			$this->setQueryParamRequested( $this->getAction() );
+		}
+
+		return $this->query_param_requested;
+	}
+
+	/**
+	 * @param string $query_param_requested
+	 *
+	 * @return Action
+	 */
+	public function setQueryParamRequested( string $query_param_requested ): Action {
+		$this->query_param_requested = self::QUERY_PREFIX_REQUESTED . sanitize_key( $query_param_requested );
+
+		return $this;
+	}
+
+	/**
+	 * @param string[] $query_args
+	 *
+	 * @return string[]
+	 */
+	public function removable_query_args( array $query_args ): array {
+		array_push( $query_args, $this->getQueryParam(), $this->getQueryParamRequested() );
+
+		return $query_args;
 	}
 
 	/**
@@ -249,14 +315,18 @@ class Action implements getIdInterface {
 	public function notice() {
 		if (
 			!is_null( $screen = get_current_screen() )
-			&& ( $screen->id === $this->getScreen() )
+			&& ( $screen->id === $this->getScreen()->getId() )
 			&& isset( $_REQUEST[ $field = $this->getQueryParam() ] )
 		) {
-			$count = absint( $_REQUEST[ $field ] );
+			$updated_count   = absint( $_REQUEST[ $field ] );
+			$requested_count = absint( $_REQUEST[ $this->getQueryParamRequested() ] );
 			printf(
 				'<div class="%1$s">%2$s</div>',
-				'notice notice-success is-dismissible',
-				wpautop( sprintf( $this->getMessage( $count ), $count ), false )
+				sprintf(
+					'notice %s is-dismissible',
+					( $updated_count === $requested_count ) ? 'notice-success' : 'notice-warning'
+				),
+				wpautop( sprintf( $this->getMessage( $updated_count ), $updated_count ), false )
 			);
 		}
 	}
@@ -266,7 +336,7 @@ class Action implements getIdInterface {
 	 *
 	 * @return string
 	 */
-	protected function getMessage( int $items_count ) {
+	protected function getMessage( int $items_count ): string {
 		return in_array( $items_count, $this->getSingleNumbers() ) ? $this->getMsgSingle() : $this->getMsgPlural();
 	}
 
@@ -323,6 +393,36 @@ class Action implements getIdInterface {
 		$this->msg_plural = sanitize_text_field( $msg_plural );
 
 		return $this;
+	}
+
+	/**
+	 * @return bool
+	 */
+	private function getDidAction(): bool {
+		return !empty( $this->did_action );
+	}
+
+	/**
+	 * @param bool $did_action
+	 *
+	 * @return void
+	 */
+	private function setDidAction( bool $did_action ): void {
+		$this->did_action = $did_action;
+	}
+
+	/**
+	 * @return int
+	 */
+	private function getProcessedCount(): int {
+		return $this->processed_count;
+	}
+
+	/**
+	 * @param int $processed_count
+	 */
+	private function setProcessedCount( int $processed_count ): void {
+		$this->processed_count = $processed_count;
 	}
 
 }

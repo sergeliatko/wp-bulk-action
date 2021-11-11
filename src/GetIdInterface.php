@@ -4,10 +4,14 @@
 namespace SergeLiatko\WPBulkAction;
 
 /**
- * Interface getIdInterface
+ * Interface GetIdInterface
  *
  * @package SergeLiatko\WPBulkAction
  */
-interface getIdInterface {
+interface GetIdInterface {
+
+	/**
+	 * @return string
+	 */
 	public function getId(): string;
 }
