@@ -13,11 +13,11 @@ class Factory {
 	/**
 	 * @param array $items
 	 *
-	 * @return array|\SergeLiatko\WPBulkAction\GetIdInterface[]
+	 * @return array|GetIdInterface[]
 	 */
 	public static function mapIdToKey( array $items ): array {
 		$new_items = array();
-		/** @var mixed|\SergeLiatko\WPBulkAction\GetIdInterface $item */
+		/** @var mixed|GetIdInterface $item */
 		foreach ( $items as $item ) {
 			if ( in_array( 'SergeLiatko\WPBulkAction\GetIdInterface', class_implements( get_class( $item ) ) ) ) {
 				$new_items[ $item->getId() ] = $item;
@@ -33,7 +33,7 @@ class Factory {
 	 * @return mixed
 	 * @noinspection PhpUnused
 	 */
-	public static function createManager( array $item ) {
+	public static function createManager( array $item ): mixed {
 		return self::create( $item, 'SergeLiatko\WPBulkAction\Manager' );
 	}
 
@@ -43,7 +43,7 @@ class Factory {
 	 *
 	 * @return mixed
 	 */
-	protected static function create( array $item, string $default_class ) {
+	protected static function create( array $item, string $default_class ): mixed {
 		$class = empty( $item['_class'] ) ? $default_class : $item['_class'];
 		unset( $item['_class'] );
 
@@ -55,7 +55,7 @@ class Factory {
 	 *
 	 * @return mixed
 	 */
-	public static function createScreen( array $item ) {
+	public static function createScreen( array $item ): mixed {
 		return self::create( $item, 'SergeLiatko\WPBulkAction\Screen' );
 	}
 
@@ -64,7 +64,7 @@ class Factory {
 	 *
 	 * @return mixed
 	 */
-	public static function createAction( array $item ) {
+	public static function createAction( array $item ): mixed {
 		return self::create( $item, 'SergeLiatko\WPBulkAction\Action' );
 	}
 }

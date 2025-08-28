@@ -13,12 +13,12 @@ class Screen implements GetActionsInterface {
 	/**
 	 * @var string $id
 	 */
-	protected $id;
+	protected string $id;
 
 	/**
-	 * @var array|\SergeLiatko\WPBulkAction\Action[]
+	 * @var array|Action[]
 	 */
-	protected $actions;
+	protected array $actions;
 
 	/**
 	 * Screen constructor.
@@ -28,9 +28,9 @@ class Screen implements GetActionsInterface {
 	public function __construct( array $args ) {
 		/**
 		 * @var string                                   $id
-		 * @var array|\SergeLiatko\WPBulkAction\Action[] $actions
+		 * @var array|Action[] $actions
 		 */
-		extract( wp_parse_args( $args, $this->defaults() ), EXTR_OVERWRITE );
+		extract( wp_parse_args( $args, $this->defaults() ) );
 		$this->setId( $id );
 		$this->setActions( $actions );
 	}
@@ -54,7 +54,7 @@ class Screen implements GetActionsInterface {
 	}
 
 	/**
-	 * @return array|\SergeLiatko\WPBulkAction\Action[]
+	 * @return array|Action[]
 	 * @noinspection PhpUnused
 	 */
 	public function getActions(): array {
@@ -62,7 +62,7 @@ class Screen implements GetActionsInterface {
 	}
 
 	/**
-	 * @param array|\SergeLiatko\WPBulkAction\Action[] $actions
+	 * @param array|Action[] $actions
 	 *
 	 * @return Screen
 	 */

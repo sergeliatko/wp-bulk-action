@@ -11,7 +11,7 @@ namespace SergeLiatko\WPBulkAction;
 interface GetActionsInterface extends GetIdInterface {
 
 	/**
-	 * @return array|\SergeLiatko\WPBulkAction\Action[]
+	 * @return array|Action[]
 	 */
 	public function getActions(): array;
 

@@ -11,15 +11,15 @@ namespace SergeLiatko\WPBulkAction;
 class Manager {
 
 	/**
-	 * @var array|\SergeLiatko\WPBulkAction\Screen[]
+	 * @var array|Screen[]
 	 */
-	protected $screens;
+	protected array $screens;
 
 	public function __construct( array $args ) {
 		/**
-		 * @var array|\SergeLiatko\WPBulkAction\Screen[] $screens
+		 * @var array|Screen[] $screens
 		 */
-		extract( wp_parse_args( $args, $this->defaults() ), EXTR_OVERWRITE );
+		extract( wp_parse_args( $args, $this->defaults() ) );
 		$this->setScreens( $screens );
 		add_action( 'admin_init', array( $this, 'initiateScreens' ), 10, 0 );
 	}
@@ -36,7 +36,7 @@ class Manager {
 	/**
 	 * Instantiates screen objects.
 	 */
-	public function initiateScreens() {
+	public function initiateScreens(): void {
 		$screens = $this->getScreens();
 		array_walk( $screens, function ( &$item, $key ) {
 			$item = Factory::createScreen( wp_parse_args( $item, array(
@@ -47,14 +47,14 @@ class Manager {
 	}
 
 	/**
-	 * @return array|\SergeLiatko\WPBulkAction\GetActionsInterface[]
+	 * @return array|GetActionsInterface[]
 	 */
 	public function getScreens(): array {
 		return $this->screens;
 	}
 
 	/**
-	 * @param array|\SergeLiatko\WPBulkAction\GetActionsInterface[] $screens
+	 * @param array|GetActionsInterface[] $screens
 	 *
 	 * @return Manager
 	 */

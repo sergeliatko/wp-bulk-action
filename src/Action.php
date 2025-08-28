@@ -18,22 +18,22 @@ class Action implements GetIdInterface {
 	/**
 	 * @var GetActionsInterface $screen
 	 */
-	protected $screen;
+	protected GetActionsInterface $screen;
 
 	/**
 	 * @var string $action
 	 */
-	protected $action;
+	protected string $action;
 
 	/**
 	 * @var string
 	 */
-	protected $query_param;
+	protected string $query_param;
 
 	/**
 	 * @var string $query_param_requested
 	 */
-	protected $query_param_requested;
+	protected string $query_param_requested;
 
 	/**
 	 * @var callable $callback
@@ -43,32 +43,32 @@ class Action implements GetIdInterface {
 	/**
 	 * @var string $label
 	 */
-	protected $label;
+	protected string $label;
 
 	/**
 	 * @var string $msg_single
 	 */
-	protected $msg_single;
+	protected string $msg_single;
 
 	/**
 	 * @var string $msg_plural
 	 */
-	protected $msg_plural;
+	protected string $msg_plural;
 
 	/**
 	 * @var int[] $single_numbers
 	 */
-	protected $single_numbers;
+	protected array $single_numbers;
 
 	/**
 	 * @var bool $did_action
 	 */
-	private $did_action;
+	private bool $did_action;
 
 	/**
 	 * @var int $processed_count
 	 */
-	private $processed_count;
+	private int $processed_count;
 
 	/**
 	 * BulkAction constructor.
@@ -85,7 +85,7 @@ class Action implements GetIdInterface {
 		 * @var string              $msg_plural
 		 * @var int[]               $single_numbers
 		 */
-		extract( wp_parse_args( $args, $this->defaults() ), EXTR_OVERWRITE );
+		extract( wp_parse_args( $args, $this->defaults() ) );
 		$this->setScreen( $screen );
 		$this->setAction( $action );
 		$this->setCallback( $callback );
@@ -100,9 +100,9 @@ class Action implements GetIdInterface {
 			&& !$this->isEmpty( $this->getAction() )
 			&& is_callable( $this->getCallback() )
 		) {
-			add_filter( self::REGISTRATION_FILTER_PREFIX . $screen->getId(), array( $this, 'register' ), 10, 1 );
+			add_filter( self::REGISTRATION_FILTER_PREFIX . $screen->getId(), array( $this, 'register' ) );
 			add_filter( self::HANDLER_FILTER_PREFIX . $screen->getId(), array( $this, 'handle' ), 10, 3 );
-			add_filter( 'removable_query_args', array( $this, 'removable_query_args' ), 10, 1 );
+			add_filter( 'removable_query_args', array( $this, 'removable_query_args' ) );
 			add_action( 'admin_notices', array( $this, 'notice' ), 10, 0 );
 		}
 	}
@@ -123,23 +123,23 @@ class Action implements GetIdInterface {
 	}
 
 	/**
-	 * @param mixed $data
+	 * @param mixed|null $data
 	 *
 	 * @return bool
 	 */
-	protected function isEmpty( $data = null ): bool {
+	protected function isEmpty( mixed $data = null ): bool {
 		return empty( $data );
 	}
 
 	/**
-	 * @return \SergeLiatko\WPBulkAction\GetActionsInterface
+	 * @return GetActionsInterface
 	 */
 	public function getScreen(): GetActionsInterface {
 		return $this->screen;
 	}
 
 	/**
-	 * @param \SergeLiatko\WPBulkAction\GetActionsInterface $screen
+	 * @param GetActionsInterface $screen
 	 *
 	 * @return Action
 	 */
@@ -312,7 +312,7 @@ class Action implements GetIdInterface {
 	/**
 	 * Displays admin notice if query parameter is present.
 	 */
-	public function notice() {
+	public function notice(): void {
 		if (
 			!is_null( $screen = get_current_screen() )
 			&& ( $screen->id === $this->getScreen()->getId() )

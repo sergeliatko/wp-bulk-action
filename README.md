@@ -1,2 +1,2 @@
 # wp-bulk-action
-Helps registering bulk actions in WordPress screens
+Helps to register bulk actions in WordPress screens
